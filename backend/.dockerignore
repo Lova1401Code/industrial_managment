@@ -1,0 +1,6 @@
+# Backend IMI Platform - ignore node_modules
+node_modules
+npm-debug.log*
+out.txt
+err.txt
+.env
