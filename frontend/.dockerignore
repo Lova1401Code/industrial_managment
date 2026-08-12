@@ -1,0 +1,5 @@
+# Frontend IMI Platform - ignore node_modules & dist
+node_modules
+dist
+npm-debug.log*
+.env
