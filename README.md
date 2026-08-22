@@ -60,9 +60,14 @@ industrial_managment/
 
 ## Démarrage en développement
 
-Prérequis : Node.js ≥ 20.
+Prerequis : Node.js ≥ 20.
 
 ```bash
+# 0. Configurer les variables d'environnement
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# Éditer backend/.env pour définir un JWT_SECRET fort en production
+
 # 1. Backend (port 4000)
 cd backend
 npm install

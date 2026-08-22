@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { db, resetDb } from './data/seed.js';
@@ -35,7 +36,6 @@ app.use('/api/simulator', authMiddleware, simulatorRoutes);
 app.use(notFound);
 app.use(errorLogger);
 
-app.listen(PORT, () => {
-  console.log(`Industrial Management API listening on http://localhost:${PORT}`);
-  console.log(`DB seeded: ${db.users.length} users, ${db.machines.length} machines, ${db.productions.length} productions`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });
