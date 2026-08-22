@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
@@ -37,10 +38,14 @@ export default function Layout() {
   const { user, logout, can } = useAuth();
   const loc = useLocation();
   const title = TITLES[loc.pathname] || 'Industrial Management';
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const closeSidebar = () => setSidebarOpen(false);
 
   return (
     <div className="layout">
-      <aside className="sidebar">
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={closeSidebar} />}
+      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="logo">⚡ IMI Platform</div>
         <nav className="nav">
           {NAV.map(group => {
@@ -50,7 +55,7 @@ export default function Layout() {
               <div key={group.section}>
                 <div className="nav-section">{group.section}</div>
                 {items.map(i => (
-                  <NavLink key={i.to} to={i.to} className={({isActive}) => isActive ? 'active' : ''}>
+                  <NavLink key={i.to} to={i.to} onClick={closeSidebar} className={({isActive}) => isActive ? 'active' : ''}>
                     <span style={{display:'inline-flex',width:20,height:20,borderRadius:5,background:'var(--panel-2)',alignItems:'center',justifyContent:'center',fontSize:'.72rem',fontWeight:700,color:'var(--accent)'}}>{i.icon}</span>
                     {i.label}
                   </NavLink>
@@ -62,7 +67,10 @@ export default function Layout() {
       </aside>
       <div className="main">
         <header className="topbar">
-          <div className="page-title">{title}</div>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <button className="menu-toggle" onClick={() => setSidebarOpen(o => !o)}>☰</button>
+            <div className="page-title">{title}</div>
+          </div>
           <div className="user">
             <span>{user?.name}</span>
             <span className={`role-badge badge ${user?.role}`}>{user?.role}</span>
