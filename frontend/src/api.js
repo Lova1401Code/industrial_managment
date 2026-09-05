@@ -1,4 +1,12 @@
+import { fetchWithTimeout } from './utils/fetchWithTimeout.js';
+
 const BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
+let serverStatusCallbacks = null;
+
+export function configureServerStatusCallbacks(callbacks) {
+  serverStatusCallbacks = callbacks;
+}
 
 function getToken() {
   return localStorage.getItem('imip_token') || '';
@@ -8,17 +16,39 @@ async function request(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(BASE + path, { ...options, headers });
-  if (res.status === 204) return null;
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
-  if (!res.ok) {
-    const msg = (data && data.error) || `Erreur ${res.status}`;
-    const err = new Error(msg);
-    err.status = res.status;
+
+  if (serverStatusCallbacks) serverStatusCallbacks.onRequestStart();
+
+  try {
+    const res = await fetchWithTimeout(
+      BASE + path,
+      { ...options, headers },
+      {
+        onWarn: () => serverStatusCallbacks?.onWarn(),
+        onRetry: (attempt, max) => serverStatusCallbacks?.onRetry(attempt, max),
+      },
+    );
+    if (res.status === 204) return null;
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
+    if (!res.ok) {
+      const msg = (data && data.error) || `Erreur ${res.status}`;
+      const err = new Error(msg);
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      if (serverStatusCallbacks) serverStatusCallbacks.onError();
+      const timeoutErr = new Error('Le serveur ne repond pas. Veuillez reessayer dans un instant.');
+      timeoutErr.status = 0;
+      throw timeoutErr;
+    }
     throw err;
+  } finally {
+    if (serverStatusCallbacks) serverStatusCallbacks.onRequestEnd();
   }
-  return data;
 }
 
 export const api = {
